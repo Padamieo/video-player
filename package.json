@@ -7,7 +7,8 @@
     "start": "electron ."
   },
   "devDependencies": {
-    "electron": "*"
+    "electron": "*",
+    "electron-packager": "^8.2.0"
   },
   "dependencies": {
     "hipchatter": "^1.0.0",
