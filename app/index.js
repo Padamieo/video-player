@@ -11,12 +11,21 @@ var lastChatId = -1; // presume your thiniking : localStorage.setItem("example",
 var lastMessageDate = new Date();
 
 var youtube = require('youtube-iframe-player');
+var bail = true;
+
+var youtubePlayer;
 
 setInterval(function() {
+  if(bail){
+    get_hipchat_history();
+  }
+  console.log("i");
+}, 10000);
+
+function get_hipchat_history(){
   hipchat.history(hipchatRoomName, function(err, history){
-    console.log("HERE");
-    //console.log(err);
-    console.log(history);
+
+    console.log(youtubePlayer);
 
     for (var key in history.items) {
       var thisMessage = history.items[key];
@@ -41,7 +50,7 @@ setInterval(function() {
   //     console.log(history.items.length)
   //     console.log(history.items[history.items.length-2]);
   });
-}, 10000);
+}
 
 function is_youtube(message){
   return message.includes("youtube");
@@ -57,36 +66,11 @@ function parse_youtube_url(url){
   return (match&&match[7].length==11)? match[7] : false;
 }
 
-/*
-Object {date: "2016-11-03T13:30:59.857873+00:00", from: Object, id: "5fb74f1e-fe9d-4098-9f00-ce08a42e44b0", mentions: Array[0], message: "https://www.youtube.com/watch?v=btPJPFnesV4"…}
-date
-:
-"2016-11-03T13:30:59.857873+00:00"
-from
-:
-Object
-id
-:
-"5fb74f1e-fe9d-4098-9f00-ce08a42e44b0"
-mentions
-:
-Array[0]
-message
-:
-"https://www.youtube.com/watch?v=btPJPFnesV4"
-type
-:
-"message"
-__proto__
-:
-Object
-*/
-
 function play_youtube(video_id){
   youtube.init(function() {
     console.log('API Loaded');
 
-    var youtubePlayer = youtube.createPlayer('video-player', {
+    youtubePlayer = youtube.createPlayer('video-player', {
       width: '720',
       height: '405',
       videoId: video_id, //'M7lc1UVf-VE',
@@ -103,6 +87,17 @@ function play_youtube(video_id){
 
     function onPlayerStateChange(event) {
       console.log('Player State Changed: ', event);
+      //console.log(event.data);
+      if(event.data == 0){
+        console.log("STOPING VIDEO STOPPING VIDEO");
+        stopVideo();
+      }
+      //stopVideo();
     }
+
+    function stopVideo() {
+      youtubePlayer.stopVideo();
+    }
+
   });
 }

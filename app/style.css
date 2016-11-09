@@ -10,8 +10,8 @@ body{
   width: auto;
   text-align: center;
   background: url(xv.png);
-  min-width: 750px;
-
+  margin: 0;
+  padding: 0;
 }
 
 .holder{
@@ -24,20 +24,39 @@ body{
   background: -o-radial-gradient(gainsboro 40%, rgba(255,255,255,0.0) 70%); /* For Opera 11.6-12.0 */
   background: -moz-radial-gradient(gainsboro 40%,  rgba(255,255,255,0.0) 70%); /* For Firefox 3.6-15 */
   background: radial-gradient(gainsboro 40%, rgba(255,255,255,0.0) 70%); /* Standard syntax */
+  width: 100%;
+  -webkit-transition: width 2s;
+}
+
+@media (max-width: 1000px) {
+  .holder{
+    height: 100vh;
+  }
 }
 
 .logo {
   display: block;
-  position: relative;
-  float: left;
+  position: absolute;
   text-indent: -9999px;
   background: url(floral.svg);
   background-size: 100% 100%;
   width: 41vw;
   height: 41vw;
-  float: left;
+  min-width: 50%;
+  min-height: 100%;
   max-width: 700px;
   max-height: 700px;
+  right: 0;
+  top: 0;
+  -webkit-transition: background-size 2s;
+  -webkit-transition: top 2s;
+}
+
+@media (max-width: 1000px) {
+  .logo {
+    background-size: 200% 100%;
+    top: -13%;
+  }
 }
 
 .flip{
@@ -47,21 +66,36 @@ body{
   transform: scaleX(-1);
   filter: FlipH;
   -ms-filter: "FlipH";
+  left: 0px!important;
+  top: 0;
+  display: block;
+  position: absolute;
+}
+
+@media (max-width: 1000px) {
+  .flip {
+    top: -13%;
+  }
 }
 
 #video-player{
   display: block;
   position: relative;
-  /* float: left; */
   width: 720px;
   height: 405px;
   background: rgba(255,255,255,0.5);
-  left: -360px;
   top: 7vw;
   border: 1px solid grey;
+  margin: auto;
+  z-index: 100;
 }
 
-
+@media (max-width: 740px) {
+  #video-player{
+    width: 100%;
+    height: 56.25vw;
+  }
+}
 
 
 @-webkit-keyframes wave {
@@ -85,9 +119,14 @@ body{
     transform: scaleY(2);
   }
 }
+
+.loader-container{
+  height: 100%;
+}
+
 .wave-spread .loader {
-  width: 400px;
-  height: 400px;
+  width: 50%;
+  height: 100%;
   margin: auto;
 }
 .wave-spread .loader > div {
@@ -100,7 +139,7 @@ body{
   animation: wave 1s cubic-bezier(0.85, 0.25, 0.37, 0.85) infinite;
 }
 .wave-spread .loader .line-1 {
-  margin-left: 33.33%;
+  margin-left: 37%;
 }
 .wave-spread .loader .line-1, .wave-spread .loader .line-5 {
   -webkit-animation-delay: .4s;
