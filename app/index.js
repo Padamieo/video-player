@@ -85,7 +85,7 @@ function play_youtube(video_id){
 
     function onPlayerStateChange(event) {
       if(event.data == 0){
-        playQueueVideo(queue.pop());
+        playQueueVideo(queue.shift());
       }
     }
 
