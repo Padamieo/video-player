@@ -12,43 +12,42 @@ var lastMessageDate = new Date();
 
 var youtube = require('youtube-iframe-player');
 var bail = true;
-
+var queue = [];
 var youtubePlayer;
 
 setInterval(function() {
   if(bail){
     get_hipchat_history();
   }
-  console.log("i");
+  console.log(queue);
 }, 10000);
 
 function get_hipchat_history(){
   hipchat.history(hipchatRoomName, function(err, history){
 
-    console.log(youtubePlayer);
-
     for (var key in history.items) {
       var thisMessage = history.items[key];
 
       if (Date.parse(thisMessage.date) < Date.parse(lastMessageDate)) {
-        console.log("This message is old");
         continue;
       }
 
       if(is_youtube(thisMessage.message)){
         if(!duplicate_hipchat_video(thisMessage.message)){
-          play_youtube(parse_youtube_url(thisMessage.message));
+          if (typeof youtubePlayer == "undefined") {
+            play_youtube(parse_youtube_url(thisMessage.message));
+          }else{
+            if( youtubePlayer.getPlayerState() == 1 ){
+              queue.push(parse_youtube_url(thisMessage.message));
+            }else{
+              playQueueVideo(parse_youtube_url(thisMessage.message));
+            }
+          }
+          lastMessageDate = new Date();
         }
       }
-
-      //console.log(is_youtube(thisMessage.message));
-      // console.log("NEW MESSAGE: " + thisMessage.message);
     }
 
-  // print the last message
-  //console.log(history.items[history.items.length-1].message);
-  //     console.log(history.items.length)
-  //     console.log(history.items[history.items.length-2]);
   });
 }
 
@@ -68,12 +67,11 @@ function parse_youtube_url(url){
 
 function play_youtube(video_id){
   youtube.init(function() {
-    console.log('API Loaded');
 
     youtubePlayer = youtube.createPlayer('video-player', {
       width: '720',
       height: '405',
-      videoId: video_id, //'M7lc1UVf-VE',
+      videoId: video_id,
       playerVars: { 'autoplay': 0, 'controls': 1 },
       events: {
         'onReady': playerReady,
@@ -86,18 +84,15 @@ function play_youtube(video_id){
     }
 
     function onPlayerStateChange(event) {
-      console.log('Player State Changed: ', event);
-      //console.log(event.data);
       if(event.data == 0){
-        console.log("STOPING VIDEO STOPPING VIDEO");
-        stopVideo();
+        playQueueVideo(queue.pop());
       }
-      //stopVideo();
-    }
-
-    function stopVideo() {
-      youtubePlayer.stopVideo();
     }
 
   });
+}
+
+function playQueueVideo(videoId){
+  youtubePlayer.cueVideoById(videoId, 5, "medium");
+  youtubePlayer.playVideo();
 }
