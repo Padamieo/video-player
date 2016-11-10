@@ -22,7 +22,9 @@ function createWindow () {
     height: 600,
     minWidth: 750,
     minHeight: 510,
-    darkTheme: true,
+    webPreferences:{
+      devTools: true
+    }
   })
 
   //frame: false

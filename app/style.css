@@ -3,15 +3,43 @@ html{
   -webkit-app-region: drag;
 }
 
+p, h1{
+  color: #fff;
+}
+
+h1{
+  font-family: "Garamond";
+  font-size: 2.5vw;
+  position: absolute;
+  text-align: center;
+  top: 0;
+  padding: 0;
+  margin: 2vw 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.navbar{
+  background: rgba(255,255,255,0.2);
+  display: block;
+  clear: both;
+  height: 5vw;
+  position: absolute;
+  width: 100%;
+  z-index: 100;
+  margin: 1vw 0;
+}
+
 body{
   display: block;
   position: relative;
   background: #ABBDA5;
   width: auto;
   text-align: center;
-  background: url(xv.png);
+  background: url(xv_dark.png);
   margin: 0;
   padding: 0;
+  /*display: flex;*/
 }
 
 .holder{
@@ -20,12 +48,22 @@ body{
   position: relative;
   display: inline-block;
   vertical-align: text-top;
-  background: -webkit-radial-gradient(gainsboro 40%, rgba(255,255,255,0.0) 70%); /* Safari 5.1-6.0 */
-  background: -o-radial-gradient(gainsboro 40%, rgba(255,255,255,0.0) 70%); /* For Opera 11.6-12.0 */
-  background: -moz-radial-gradient(gainsboro 40%,  rgba(255,255,255,0.0) 70%); /* For Firefox 3.6-15 */
-  background: radial-gradient(gainsboro 40%, rgba(255,255,255,0.0) 70%); /* Standard syntax */
+
+  /*
+  background: -webkit-radial-gradient(gainsboro 40%, rgba(255,255,255,0.0) 70%);
+  background: -o-radial-gradient(gainsboro 40%, rgba(255,255,255,0.0) 70%);
+  background: -moz-radial-gradient(gainsboro 40%,  rgba(255,255,255,0.0) 70%);
+  background: radial-gradient(gainsboro 40%, rgba(255,255,255,0.0) 70%);
+  */
+
+  background: -webkit-radial-gradient(black 40%, rgba(255,255,255,0.0) 70%);
+  background: -o-radial-gradient(black 40%, rgba(255,255,255,0.0) 70%);
+  background: -moz-radial-gradient(black 40%,  rgba(255,255,255,0.0) 70%);
+  background: radial-gradient(black 40%, rgba(255,255,255,0.0) 70%);
+
   width: 100%;
   -webkit-transition: width 2s;
+  flex: 1;
 }
 
 @media (max-width: 1000px) {
@@ -34,11 +72,16 @@ body{
   }
 }
 
+/*.queue{
+  flex: 0;
+  width: 0px;
+}*/
+
 .logo {
   display: block;
   position: absolute;
   text-indent: -9999px;
-  background: url(floral.svg);
+  background: url(floral_dark.svg);
   background-size: 100% 100%;
   width: 41vw;
   height: 41vw;
@@ -83,9 +126,10 @@ body{
   position: relative;
   width: 720px;
   height: 405px;
-  background: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.2);
   top: 7vw;
-  border: 1px solid grey;
+  /*border: 1px solid grey;*/
+  border: 1px solid #fff;
   margin: auto;
   z-index: 100;
 }
@@ -149,3 +193,14 @@ body{
   -webkit-animation-delay: .2s;
           animation-delay: .2s;
 }
+
+.clearfix:after {
+	visibility: hidden;
+	display: block;
+	font-size: 0;
+	content: " ";
+	clear: both;
+	height: 0;
+	}
+* html .clearfix             { zoom: 1; } /* IE6 */
+*:first-child+html .clearfix { zoom: 1; }

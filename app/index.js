@@ -7,9 +7,8 @@ const hipchatter = require('hipchatter');
 var hipchat = new hipchatter(parsedData.private);
 
 var hipchatRoomName = 'Regus Music';
-var lastChatId = -1; // presume your thiniking : localStorage.setItem("example", "data");
 var lastMessageDate = new Date();
-
+lastMessageDate = lastMessageDate - 3000;
 var youtube = require('youtube-iframe-player');
 var bail = true;
 var queue = [];
@@ -34,20 +33,29 @@ function get_hipchat_history(){
 
       if(is_youtube(thisMessage.message)){
         if(!duplicate_hipchat_video(thisMessage.message)){
+          var currentVideoID = parse_youtube_url(thisMessage.message);
+
           if (typeof youtubePlayer == "undefined") {
-            play_youtube(parse_youtube_url(thisMessage.message));
+            play_youtube(currentVideoID);
           }else{
+
             if( youtubePlayer.getPlayerState() == 1 ){
-              queue.push(parse_youtube_url(thisMessage.message));
+
+              var testQueue = queue.map(function(item){ return item.youtube });
+              console.log(testQueue);
+              if ( testQueue.indexOf(currentVideoID) === -1) {
+                var request = { youtube: currentVideoID, from: thisMessage.from };
+                queue.push(request);
+              }
+
             }else{
-              playQueueVideo(parse_youtube_url(thisMessage.message));
+              playQueueVideo(currentVideoID);
             }
           }
           lastMessageDate = new Date();
         }
       }
     }
-
   });
 }
 
@@ -85,7 +93,8 @@ function play_youtube(video_id){
 
     function onPlayerStateChange(event) {
       if(event.data == 0){
-        playQueueVideo(queue.shift());
+        var request = queue.shift()
+        playQueueVideo(request.youtube);
       }
     }
 
