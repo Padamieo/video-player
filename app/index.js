@@ -7,7 +7,7 @@ const hipchatter = require('hipchatter');
 var hipchat = new hipchatter(parsedData.private);
 
 var hipchatRoomName = 'Regus Music';
-var lastMessageDate = 0;//new Date();
+var lastMessageDate = new Date();
 var youtube = require('youtube-iframe-player');
 var bail = true;
 var queue = [];
@@ -24,10 +24,17 @@ setInterval(function() {
 }, 10000);
 
 function updateQueue(){
+  console.log(queue);
   for (var i = 0; i < queue.length; i++) {
     var current = queue[i];
-    document.getElementsByClassName("queue")[0].innerHTML += '<div class="item"><p>'+current.name+'</p></div>';
+    if(document.getElementById(current.youtube) == null){
+      document.getElementsByClassName("queue")[0].innerHTML += buildHtml(current.youtube, current.name);
+    }
   }
+}
+
+function buildHtml(youtube, name){
+  return '<div id="'+youtube+'" class="item"><p>'+youtube+'</p><p>'+name+'</p></div>';
 }
 
 function get_hipchat_history(){
@@ -65,7 +72,7 @@ function get_hipchat_history(){
               playQueueVideo(request);
             }
           }
-          lastMessageDate = 0;//new Date();
+          lastMessageDate = new Date();
         }
       }
     }
@@ -125,10 +132,19 @@ function play_youtube(newrequest){
   });
 }
 
+Element.prototype.remove = function() {
+  this.parentElement.removeChild(this);
+}
+NodeList.prototype.remove = HTMLCollection.prototype.remove = function() {
+  for(var i = this.length - 1; i >= 0; i--) {
+    if(this[i] && this[i].parentElement) {
+      this[i].parentElement.removeChild(this[i]);
+    }
+  }
+}
+
 function playQueueVideo(request){
-  // $( document ).ready(function() {
-  //   $('.item').slice(1).hide();
-  // });
+  document.getElementById(request.youtube).remove();
   updateRequester(request);
   youtubePlayer.cueVideoById(request.youtube, 5, "medium");
   youtubePlayer.playVideo();
