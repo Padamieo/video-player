@@ -7,7 +7,7 @@ const hipchatter = require('hipchatter');
 var hipchat = new hipchatter(parsedData.private);
 
 var hipchatRoomName = 'Regus Music';
-var lastMessageDate = new Date();
+var lastMessageDate = 0;//new Date();
 var youtube = require('youtube-iframe-player');
 var bail = true;
 var queue = [];
@@ -18,7 +18,17 @@ setInterval(function() {
     get_hipchat_history();
   }
   //console.log(queue);
+  if(queue.length >= 1){
+    updateQueue();
+  }
 }, 10000);
+
+function updateQueue(){
+  for (var i = 0; i < queue.length; i++) {
+    var current = queue[i];
+    document.getElementsByClassName("queue")[0].innerHTML += '<div class="item"><p>'+current.name+'</p></div>';
+  }
+}
 
 function get_hipchat_history(){
   hipchat.history(hipchatRoomName, function(err, history){
@@ -55,7 +65,7 @@ function get_hipchat_history(){
               playQueueVideo(request);
             }
           }
-          lastMessageDate = new Date();
+          lastMessageDate = 0;//new Date();
         }
       }
     }
@@ -91,38 +101,39 @@ function play_youtube(newrequest){
     });
 
     function playerReady(event) {
-      //console.log(newrequest.name);
       updateRequester(newrequest);
       youtubePlayer.playVideo();
     }
 
     function onPlayerStateChange(event) {
+
       if(event.data == 0){
         if(queue.length != 0){
           var request = queue.shift();
-          //console.log(request.name);
-          updateRequester(request);
           playQueueVideo(request.youtube);
         }
       }
       if(event.data == -1){
         if(queue.length != 0){
           var request = queue.shift();
-          updateRequester(request);
           playQueueVideo(request.youtube);
         }
       }
+
     }
 
   });
 }
 
 function playQueueVideo(request){
+  // $( document ).ready(function() {
+  //   $('.item').slice(1).hide();
+  // });
+  updateRequester(request);
   youtubePlayer.cueVideoById(request.youtube, 5, "medium");
   youtubePlayer.playVideo();
 }
 
 function updateRequester(request){
-  //console.log(request.name);
-  document.getElementsByClassName("queue")[0].innerHTML = "<p>"+request.name+"</p>";
+  document.getElementsByClassName("user")[0].innerHTML = "<p>"+request.name+"</p>";
 }
