@@ -11,7 +11,9 @@
     "electron-packager": "^8.2.0"
   },
   "dependencies": {
+    "electron-reload": "^1.0.3",
     "hipchatter": "^1.0.0",
-    "react-player": "^0.12.0"
+    "react-player": "^0.12.0",
+    "youtube-iframe-player": "*"
   }
 }

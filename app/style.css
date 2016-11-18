@@ -3,8 +3,16 @@ html{
   -webkit-app-region: drag;
 }
 
-p, h1{
+h1{
   color: #fff;
+  font-weight: bold;
+  -webkit-text-stroke: 1px #000;
+}
+
+div.user p {
+    color: #FF4444;
+  -webkit-text-stroke: 1px #330000;
+  font-weight: bolder;
 }
 
 h1{
@@ -96,6 +104,7 @@ body{
 }
 
 .logo {
+    z-index: -1;
   display: block;
   position: absolute;
   text-indent: -9999px;

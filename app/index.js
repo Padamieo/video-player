@@ -1,155 +1,153 @@
-
-
 var fs = require('fs');
-var parsedData = JSON.parse(fs.readFileSync('private.json', 'utf8'));
-
 const hipchatter = require('hipchatter');
+
+var parsedData = JSON.parse(fs.readFileSync('private.json', 'utf8'));
 var hipchat = new hipchatter(parsedData.private);
 
 var hipchatRoomName = 'Regus Music';
-var lastMessageDate = new Date();
 var youtube = require('youtube-iframe-player');
+var lastMessageDate = new Date();
+
 var bail = true;
 var queue = [];
+var currentlyPlaying;
 var youtubePlayer;
 
-setInterval(function() {
-  if(bail){
-    get_hipchat_history();
-  }
-  //console.log(queue);
-  if(queue.length >= 1){
-    updateQueue();
-  }
-}, 10000);
-
-function updateQueue(){
-  console.log(queue);
-  for (var i = 0; i < queue.length; i++) {
-    var current = queue[i];
-    if(document.getElementById(current.youtube) == null){
-      document.getElementsByClassName("queue")[0].innerHTML += buildHtml(current.youtube, current.name);
+//Enable Dev Tools with Control+Shift+I
+document.addEventListener("keydown", function (e) {
+    if (e.which === 123) {
+        require('remote').getCurrentWindow().toggleDevTools();
+    } else if (e.which === 116) {
+        location.reload();
     }
-  }
-}
+});
 
-function buildHtml(youtube, name){
-  return '<div id="'+youtube+'" class="item"><p>'+youtube+'</p><p>'+name+'</p></div>';
-}
-
-function get_hipchat_history(){
-  hipchat.history(hipchatRoomName, function(err, history){
-
-    for (var key in history.items) {
-      var thisMessage = history.items[key];
-
-      if (Date.parse(thisMessage.date) < Date.parse(lastMessageDate)) {
-        continue;
-      }
-
-      if(is_youtube(thisMessage.message)){
-        if(!duplicate_hipchat_video(thisMessage.message)){
-
-          var currentVideoID = parse_youtube_url(thisMessage.message);
-
-          var request = {
-            youtube: currentVideoID,
-            name: thisMessage.from.name
-          };
-
-          if (typeof youtubePlayer == "undefined") {
-            play_youtube(request);
-          }else{
-
-            if( youtubePlayer.getPlayerState() == 1 ){
-
-              var testQueue = queue.map(function(item){ return item.youtube });
-              if ( testQueue.indexOf(currentVideoID) === -1) {
-                queue.push(request);
-              }
-
-            }else{
-              playQueueVideo(request);
-            }
-          }
-          lastMessageDate = new Date();
-        }
-      }
-    }
-  });
-}
-
-function is_youtube(message){
-  return message.includes("youtube");
-}
-
-function duplicate_hipchat_video(message){
-  return message.includes("<p>");
-}
-
-function parse_youtube_url(url){
-  var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
-  var match = url.match(regExp);
-  return (match&&match[7].length==11)? match[7] : false;
-}
-
-function play_youtube(newrequest){
-  youtube.init(function() {
-
+//Set up the YouTube Embed
+youtube.init(function () {
     youtubePlayer = youtube.createPlayer('video-player', {
-      width: '720',
-      height: '405',
-      videoId: newrequest.youtube,
-      playerVars: { 'autoplay': 0, 'controls': 1 },
-      events: {
-        'onReady': playerReady,
-        'onStateChange': onPlayerStateChange
-      }
+        width: '720',
+        height: '405',
+        //videoId: "R8MWKsheHxk",
+        playerVars: {'autoplay': 0, 'controls': 1},
+        events: {
+            'onReady': playerReady,
+            'onStateChange': onPlayerStateChange
+        }
     });
 
     function playerReady(event) {
-      updateRequester(newrequest);
-      youtubePlayer.playVideo();
+        console.log("Player is ready");
+        console.log(event);
+        playVideo();
     }
 
     function onPlayerStateChange(event) {
-
-      if(event.data == 0){
-        if(queue.length != 0){
-          var request = queue.shift();
-          playQueueVideo(request.youtube);
+        console.log("Player state change");
+        console.log(event);
+        if (event.data === 0 || event.data === -1) {
+            playVideo();
         }
-      }
-      if(event.data == -1){
-        if(queue.length != 0){
-          var request = queue.shift();
-          playQueueVideo(request.youtube);
+    }
+});
+
+var lastPlayStarted = new Date();
+function playVideo(forceSkip) {
+    if (forceSkip || youtubePlayer.getPlayerState() == 5 || (new Date() - lastPlayStarted > 3000 && youtubePlayer.getPlayerState() == -1)) {
+        lastAttempted = new Date();
+        if (queue.length > 0) {
+            var request = queue.shift();
+            console.log("Playing next item in queue: " + request.name + " - " + request.youtube );
+            currentlyPlaying = request;
+            document.getElementsByClassName("user")[0].innerHTML = "<p>" + request.name + "</p>";
+            youtubePlayer.cueVideoById(request.youtube, 5, "medium");
+            youtubePlayer.playVideo();
         }
-      }
-
     }
-
-  });
+    updateQueue();
 }
 
-Element.prototype.remove = function() {
-  this.parentElement.removeChild(this);
+var updateTimeout;
+function performUpdate() {
+    get_hipchat_history();
+    updateTimeout = setTimeout(performUpdate, 10000);
 }
-NodeList.prototype.remove = HTMLCollection.prototype.remove = function() {
-  for(var i = this.length - 1; i >= 0; i--) {
-    if(this[i] && this[i].parentElement) {
-      this[i].parentElement.removeChild(this[i]);
+performUpdate();
+
+
+function updateQueue() {
+    //console.log(queue);
+    for (var i = 0; i < queue.length; i++) {
+        var current = queue[i];
+        if (document.getElementById(current.youtube) == null) {
+            document.getElementsByClassName("queue")[0].innerHTML += buildHtml(current.youtube, current.name);
+        }
     }
-  }
 }
 
-function playQueueVideo(request){
-  document.getElementById(request.youtube).remove();
-  updateRequester(request);
-  youtubePlayer.cueVideoById(request.youtube, 5, "medium");
-  youtubePlayer.playVideo();
+function buildHtml(youtube, name) {
+    return '<div id="' + youtube + '" class="item"><p>' + youtube + '</p><p>' + name + '</p></div>';
 }
 
-function updateRequester(request){
-  document.getElementsByClassName("user")[0].innerHTML = "<p>"+request.name+"</p>";
+function get_hipchat_history() {
+    hipchat.history(hipchatRoomName, function (err, history) {
+        if (err) {
+            console.log("Error with hipchat: " + err);
+        }
+        for (var key in history.items) {
+            var thisMessage = history.items[key];
+            var messageDate = Date.parse(thisMessage.date);
+            var messageOwner = thisMessage.from.name;
+
+            if (messageDate < Date.parse(lastMessageDate)) {
+                continue;
+            }
+            lastMessageDate = messageDate;
+
+            if (thisMessage.message == "skip" && currentlyPlaying.name == messageOwner) {
+                playVideo(true);
+            }
+            if (!is_youtube(thisMessage.message) || duplicate_hipchat_video(thisMessage)) {
+                continue;
+            }
+
+            var request = {
+                youtube: parse_youtube_url(thisMessage.message),
+                name: messageOwner
+            };
+
+            var testQueue = queue.map(function (item) { return item.youtube });
+            if (testQueue.indexOf(request.youtube) === -1) {
+                console.log("New video: " + request.name + " - " + request.youtube );
+                //console.log(thisMessage);
+                queue.push(request);
+                playVideo();
+            }
+        }
+    });
+
+}
+
+function is_youtube(message) {
+    return message.includes("youtube");
+}
+
+function duplicate_hipchat_video(message) {
+    return message.from == "Link";
+}
+
+function parse_youtube_url(url) {
+    var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
+    var match = url.match(regExp);
+    return (match && match[7].length == 11) ? match[7] : false;
+}
+
+Element.prototype.remove = function () {
+    this.parentElement.removeChild(this);
+}
+NodeList.prototype.remove = HTMLCollection.prototype.remove = function () {
+    for (var i = this.length - 1; i >= 0; i--) {
+        if (this[i] && this[i].parentElement) {
+            this[i].parentElement.removeChild(this[i]);
+        }
+    }
 }
