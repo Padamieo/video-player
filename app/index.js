@@ -74,6 +74,8 @@ function playVideo(forceSkip) {
             document.getElementsByClassName("user")[0].innerHTML = "<p>" + request.name + "</p>";
             youtubePlayer.cueVideoById(request.youtube, 5, "medium");
             youtubePlayer.playVideo();
+        } else {
+            youtubePlayer.stopVideo();
         }
     }
     updateQueue();
