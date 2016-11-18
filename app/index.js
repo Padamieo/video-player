@@ -7,7 +7,7 @@ var hipchat = new hipchatter(parsedData.private);
 
 var hipchatRoomName = 'Regus Music';
 var youtube = require('youtube-iframe-player');
-var lastMessageDate = new Date(0);
+var lastMessageDate = new Date();
 
 var bail = true;
 var queue = [];
