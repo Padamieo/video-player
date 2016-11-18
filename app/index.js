@@ -15,6 +15,7 @@ var youtubePlayer;
 var currentlyPlaying;
 var votesToSkip = 0;
 
+
 //Enable Dev Tools with Control+Shift+I
 document.addEventListener("keydown", function (e) {
     if (e.which === 123) {
@@ -57,7 +58,7 @@ function playVideo(forceSkip) {
     if (youtubePlayer == undefined) {
         return;
     }
-    if (forceSkip || youtubePlayer.getPlayerState() == 5 || (new Date() - lastPlayStarted > 3000 && youtubePlayer.getPlayerState() == -1)) {
+    if (forceSkip || youtubePlayer.getPlayerState() == 5 || youtubePlayer.getPlayerState() == 0 || (new Date() - lastPlayStarted > 3000 && youtubePlayer.getPlayerState() == -1)) {
         lastPlayStarted = new Date();
         votesToSkip = 0;
         if (queue.length > 0) {
@@ -110,7 +111,7 @@ function get_hipchat_history() {
         for (var key in history.items) {
             var thisMessage = history.items[key];
             var messageDate = Date.parse(thisMessage.date);
-            if (messageDate < lastMessageDate) {
+            if (messageDate <= lastMessageDate) {
                 continue;
             }
             lastMessageDate = messageDate;
