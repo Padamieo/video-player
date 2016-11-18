@@ -1,6 +1,7 @@
 const fs = require('fs');
 const $ = require('jQuery');
 const hipchatter = require('hipchatter');
+const search = require('youtube-search');
 
 var parsedData = JSON.parse(fs.readFileSync('private.json', 'utf8'));
 var hipchat = new hipchatter(parsedData.private);
@@ -8,6 +9,11 @@ var hipchat = new hipchatter(parsedData.private);
 var hipchatRoomName = 'Regus Music';
 var youtube = require('youtube-iframe-player');
 var lastMessageDate = new Date();
+
+var searchCpts = {
+    maxResults: 1,
+    key: 'AIzaSyDLxHamLhIcqioJhS_q6Rf8rLBVa0yrNbs'
+};
 
 var bail = true;
 var queue = [];
@@ -106,7 +112,7 @@ function buildHtml(message) {
 function get_hipchat_history() {
     hipchat.history(hipchatRoomName, function (err, history) {
         if (err) {
-            console.log("Error with hipchat: " + err);
+            console.log("Error with HipChat: " + err);
         }
         for (var key in history.items) {
             var thisMessage = history.items[key];
@@ -125,10 +131,29 @@ function handleHistoryItem(thisMessage) {
 
     if (thisMessage.message == "skip") {
         votesToSkip += 1;
-        if (currentlyPlaying.name == messageOwner || votesToSkip > 2) {
+        if ((currentlyPlaying !== undefined && currentlyPlaying.name == messageOwner) || votesToSkip > 2) {
             playVideo(true);
             return;
         }
+    }
+    if (thisMessage.message.indexOf("search: ") !== -1) {
+        search(thisMessage.message.replace("search: ", ""), searchCpts, function(err, results) {
+            if(err) {
+                console.log(err);
+                return;
+            }
+            if (results.length > 0) {
+                var request = {
+                    youtube: results[0].id,
+                    name: messageOwner,
+                    thumb: results[0].thumbnails.default.url,
+                    title: results[0].title,
+                    data: results[0]
+                };
+                addToQueueIfNotExist(request);
+            }
+        });
+        return;
     }
     if (!is_youtube(thisMessage.message) || duplicate_hipchat_video(thisMessage)) {
         return;
@@ -143,16 +168,18 @@ function handleHistoryItem(thisMessage) {
             title: data.title,
             data: data
         };
-
-        var testQueue = queue.map(function (item) {
-            return item.youtube
-        });
-        if (testQueue.indexOf(request.youtube) === -1) {
-            console.log("New video: " + request.name + " - " + request.title);
-            //console.log(thisMessage);
-            queue.push(request);
-        }
+        addToQueueIfNotExist(request);
     });
+}
+
+function addToQueueIfNotExist(request) {
+    var testQueue = queue.map(function (item) {
+        return item.youtube
+    });
+    if (testQueue.indexOf(request.youtube) === -1) {
+        console.log("New video: " + request.name + " - " + request.title);
+        queue.push(request);
+    }
 }
 
 function is_youtube(message) {
