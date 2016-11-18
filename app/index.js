@@ -1,4 +1,5 @@
-var fs = require('fs');
+const fs = require('fs');
+const $ = require('jQuery');
 const hipchatter = require('hipchatter');
 
 var parsedData = JSON.parse(fs.readFileSync('private.json', 'utf8'));
@@ -6,7 +7,7 @@ var hipchat = new hipchatter(parsedData.private);
 
 var hipchatRoomName = 'Regus Music';
 var youtube = require('youtube-iframe-player');
-var lastMessageDate = new Date();
+var lastMessageDate = new Date(0);
 
 var bail = true;
 var queue = [];
@@ -56,7 +57,7 @@ function playVideo(forceSkip) {
         lastAttempted = new Date();
         if (queue.length > 0) {
             var request = queue.shift();
-            console.log("Playing next item in queue: " + request.name + " - " + request.youtube );
+            console.log("Playing next item in queue: " + request.name + " - " + request.youtube);
             currentlyPlaying = request;
             document.getElementsByClassName("user")[0].innerHTML = "<p>" + request.name + "</p>";
             youtubePlayer.cueVideoById(request.youtube, 5, "medium");
@@ -76,16 +77,23 @@ performUpdate();
 
 function updateQueue() {
     //console.log(queue);
+    $("#queue").empty();
     for (var i = 0; i < queue.length; i++) {
         var current = queue[i];
-        if (document.getElementById(current.youtube) == null) {
-            document.getElementsByClassName("queue")[0].innerHTML += buildHtml(current.youtube, current.name);
-        }
+        $("#queue").append(buildHtml(current));
     }
 }
 
-function buildHtml(youtube, name) {
-    return '<div id="' + youtube + '" class="item"><p>' + youtube + '</p><p>' + name + '</p></div>';
+function buildHtml(message) {
+    return $("<div>").append(
+        $("<img>").attr({
+            "src": message.thumb,
+            "height": "120px",
+            "widget": "200px"
+        })
+    ).append($("<p>").addClass("requestor").text(message.name)
+    ).append($("<p>").addClass("requested-title").text(message.title)
+    );
 }
 
 function get_hipchat_history() {
@@ -95,36 +103,47 @@ function get_hipchat_history() {
         }
         for (var key in history.items) {
             var thisMessage = history.items[key];
-            var messageDate = Date.parse(thisMessage.date);
-            var messageOwner = thisMessage.from.name;
-
-            if (messageDate < Date.parse(lastMessageDate)) {
-                continue;
-            }
-            lastMessageDate = messageDate;
-
-            if (thisMessage.message == "skip" && currentlyPlaying.name == messageOwner) {
-                playVideo(true);
-            }
-            if (!is_youtube(thisMessage.message) || duplicate_hipchat_video(thisMessage)) {
-                continue;
-            }
-
-            var request = {
-                youtube: parse_youtube_url(thisMessage.message),
-                name: messageOwner
-            };
-
-            var testQueue = queue.map(function (item) { return item.youtube });
-            if (testQueue.indexOf(request.youtube) === -1) {
-                console.log("New video: " + request.name + " - " + request.youtube );
-                //console.log(thisMessage);
-                queue.push(request);
-                playVideo();
-            }
+            handleHistoryItem(thisMessage);
         }
     });
+}
 
+function handleHistoryItem(thisMessage) {
+    var messageDate = Date.parse(thisMessage.date);
+    var messageOwner = thisMessage.from.name;
+
+    if (messageDate < Date.parse(lastMessageDate)) {
+        return;
+    }
+    lastMessageDate = messageDate;
+
+    if (thisMessage.message == "skip" && currentlyPlaying.name == messageOwner) {
+        playVideo(true);
+    }
+    if (!is_youtube(thisMessage.message) || duplicate_hipchat_video(thisMessage)) {
+        return;
+    }
+    var youtubeId = parse_youtube_url(thisMessage.message);
+
+    $.getJSON("https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=" + youtubeId + "&format=json", function (data, status, xhr) {
+        var request = {
+            youtube: youtubeId,
+            name: messageOwner,
+            thumb: data.thumbnail_url,
+            title: data.title,
+            data: data
+        };
+
+        var testQueue = queue.map(function (item) {
+            return item.youtube
+        });
+        if (testQueue.indexOf(request.youtube) === -1) {
+            console.log("New video: " + request.name + " - " + request.youtube);
+            //console.log(thisMessage);
+            queue.push(request);
+            playVideo();
+        }
+    });
 }
 
 function is_youtube(message) {
