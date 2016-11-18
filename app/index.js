@@ -57,7 +57,7 @@ function playVideo(forceSkip) {
     if (youtubePlayer == undefined) {
         return;
     }
-    if (youtubePlayer.getPlayerState() == 5 || (new Date() - lastPlayStarted > 3000 && youtubePlayer.getPlayerState() == -1)) {
+    if (forceSkip || youtubePlayer.getPlayerState() == 5 || (new Date() - lastPlayStarted > 3000 && youtubePlayer.getPlayerState() == -1)) {
         lastPlayStarted = new Date();
         votesToSkip = 0;
         if (queue.length > 0) {
