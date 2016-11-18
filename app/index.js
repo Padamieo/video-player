@@ -7,12 +7,13 @@ var hipchat = new hipchatter(parsedData.private);
 
 var hipchatRoomName = 'Regus Music';
 var youtube = require('youtube-iframe-player');
-var lastMessageDate = new Date();
+var lastMessageDate = new Date(0);
 
 var bail = true;
 var queue = [];
-var currentlyPlaying;
 var youtubePlayer;
+var currentlyPlaying;
+var votesToSkip = 0;
 
 //Enable Dev Tools with Control+Shift+I
 document.addEventListener("keydown", function (e) {
@@ -37,14 +38,14 @@ youtube.init(function () {
     });
 
     function playerReady(event) {
-        console.log("Player is ready");
-        console.log(event);
+        // console.log("Player is ready");
+        // console.log(event);
         playVideo();
     }
 
     function onPlayerStateChange(event) {
-        console.log("Player state change");
-        console.log(event);
+        // console.log("Player state change");
+        // console.log(event);
         if (event.data === 0 || event.data === -1) {
             playVideo();
         }
@@ -53,11 +54,15 @@ youtube.init(function () {
 
 var lastPlayStarted = new Date();
 function playVideo(forceSkip) {
-    if (forceSkip || youtubePlayer.getPlayerState() == 5 || (new Date() - lastPlayStarted > 3000 && youtubePlayer.getPlayerState() == -1)) {
-        lastAttempted = new Date();
+    if (youtubePlayer == undefined) {
+        return;
+    }
+    if (youtubePlayer.getPlayerState() == 5 || (new Date() - lastPlayStarted > 3000 && youtubePlayer.getPlayerState() == -1)) {
+        lastPlayStarted = new Date();
+        votesToSkip = 0;
         if (queue.length > 0) {
             var request = queue.shift();
-            console.log("Playing next item in queue: " + request.name + " - " + request.youtube);
+            console.log("Playing next item in queue: " + request.name + " - " + request.title);
             currentlyPlaying = request;
             document.getElementsByClassName("user")[0].innerHTML = "<p>" + request.name + "</p>";
             youtubePlayer.cueVideoById(request.youtube, 5, "medium");
@@ -70,6 +75,7 @@ function playVideo(forceSkip) {
 var updateTimeout;
 function performUpdate() {
     get_hipchat_history();
+    playVideo();
     updateTimeout = setTimeout(performUpdate, 10000);
 }
 performUpdate();
@@ -103,22 +109,25 @@ function get_hipchat_history() {
         }
         for (var key in history.items) {
             var thisMessage = history.items[key];
+            var messageDate = Date.parse(thisMessage.date);
+            if (messageDate < lastMessageDate) {
+                continue;
+            }
+            lastMessageDate = messageDate;
             handleHistoryItem(thisMessage);
         }
     });
 }
 
 function handleHistoryItem(thisMessage) {
-    var messageDate = Date.parse(thisMessage.date);
     var messageOwner = thisMessage.from.name;
 
-    if (messageDate < Date.parse(lastMessageDate)) {
-        return;
-    }
-    lastMessageDate = messageDate;
-
-    if (thisMessage.message == "skip" && currentlyPlaying.name == messageOwner) {
-        playVideo(true);
+    if (thisMessage.message == "skip") {
+        votesToSkip += 1;
+        if (currentlyPlaying.name == messageOwner || votesToSkip > 2) {
+            playVideo(true);
+            return;
+        }
     }
     if (!is_youtube(thisMessage.message) || duplicate_hipchat_video(thisMessage)) {
         return;
@@ -138,10 +147,9 @@ function handleHistoryItem(thisMessage) {
             return item.youtube
         });
         if (testQueue.indexOf(request.youtube) === -1) {
-            console.log("New video: " + request.name + " - " + request.youtube);
+            console.log("New video: " + request.name + " - " + request.title);
             //console.log(thisMessage);
             queue.push(request);
-            playVideo();
         }
     });
 }
@@ -162,11 +170,11 @@ function parse_youtube_url(url) {
 
 Element.prototype.remove = function () {
     this.parentElement.removeChild(this);
-}
+};
 NodeList.prototype.remove = HTMLCollection.prototype.remove = function () {
     for (var i = this.length - 1; i >= 0; i--) {
         if (this[i] && this[i].parentElement) {
             this[i].parentElement.removeChild(this[i]);
         }
     }
-}
+};
