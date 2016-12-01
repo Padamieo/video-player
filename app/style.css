@@ -237,3 +237,9 @@ body{
 *:first-child+html .clearfix {
   zoom: 1;
 }
+
+div.video-information {
+    color: #FFF;
+    font-weight: bolder;
+    font-size: 1.5em;
+}
