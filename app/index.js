@@ -2,7 +2,8 @@ const fs = require('fs');
 const $ = require('jQuery');
 const hipchatter = require('hipchatter');
 
-var apikey = 'AIzaSyDYwPzLevXauI-kTSVXTLroLyHEONuF9Rw';
+var youTubeApiKey = 'AIzaSyDYwPzLevXauI-kTSVXTLroLyHEONuF9Rw';
+var roomToken = "Mz9Fz3sOUTJ6x0Vp7hJCRUyWGPjuWVYiKeUdJxsm";
 
 var parsedData = JSON.parse(fs.readFileSync('private.json', 'utf8'));
 var hipchat = new hipchatter(parsedData.private);
@@ -139,6 +140,15 @@ function handleHistoryItem(thisMessage) {
     if (thisMessage.message.indexOf("search: ") !== -1) {
         searchViaApi(thisMessage.message.replace("search: ", ""), messageOwner, function(request) {
             addToQueueIfNotExist(request);
+            hipchat.notify(hipchatRoomName, 
+                {
+                    message: messageOwner + " just requested: " + request.title,
+                    color: 'green',
+                    token: roomToken
+                }, function(err){
+                    if (err == null) console.log('Successfully notified the room.');
+                }
+            );
         });
         return;
     }
@@ -179,14 +189,14 @@ function searchViaApi(search, messageOwner, callback) {
     $.get("https://www.googleapis.com/youtube/v3/search", {
         part: 'snippet, id',
         q: search,
-        maxResults: 50,
+        maxResults: 1,
         type: 'video',
-        key: apikey
+        key: youTubeApiKey
     },
     function(data) {
         $.each(data.items, function(i, item) {
             var videoId = item.id.videoId;
-            getVideoInformation(videoId, callback);
+            getVideoInformation(videoId, messageOwner, callback);
         });
     });
 }
@@ -194,7 +204,7 @@ function searchViaApi(search, messageOwner, callback) {
 function getVideoInformation(videoId, messageOwner, callback) {
     $.get("https://www.googleapis.com/youtube/v3/videos", {
         part: 'snippet, contentDetails',
-        key: apikey,
+        key: youTubeApiKey,
         id: videoId
     },
     function(video) {
