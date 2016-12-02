@@ -243,3 +243,12 @@ div.video-information {
     font-weight: bolder;
     font-size: 1.5em;
 }
+
+#restricted {
+    background: red;
+    border-radius: 15px;
+    font-size: 5em;
+    color: #fff;
+    margin: 0 30px;
+    display: none;
+}

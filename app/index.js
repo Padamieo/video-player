@@ -12,6 +12,7 @@ var hipchatRoomName = 'Regus Music';
 var youtube = require('youtube-iframe-player');
 var lastMessageDate = new Date();
 
+var showNotifications = true;
 var bail = true;
 var queue = [];
 var youtubePlayer;
@@ -37,7 +38,8 @@ youtube.init(function () {
         playerVars: {'autoplay': 0, 'controls': 1},
         events: {
             'onReady': playerReady,
-            'onStateChange': onPlayerStateChange
+            'onStateChange': onPlayerStateChange,
+            'onError': onError
         }
     });
 
@@ -45,6 +47,14 @@ youtube.init(function () {
         // console.log("Player is ready");
         // console.log(event);
         playVideo();
+    }
+
+    function onError(event) {
+        if (event.data == 101 || event.data == 150) {
+            console.log("Restricted Video:" + youtubePlayer.getVideoUrl());
+            $("#restricted").show().fadeOut(3000);
+            playVideo(true);
+        }
     }
 
     function onPlayerStateChange(event) {
@@ -56,7 +66,7 @@ youtube.init(function () {
     }
 });
 
-var lastPlayStarted = new Date();
+var lastPlayStarted = new Date(0);
 function playVideo(forceSkip) {
     if (youtubePlayer == undefined) {
         return;
@@ -68,10 +78,11 @@ function playVideo(forceSkip) {
             var request = queue.shift();
             console.log("Playing next item in queue: " + request.name + " - " + request.title);
             currentlyPlaying = request;
+
             document.getElementsByClassName("user")[0].innerHTML = "<p>" + request.name + "</p>";
             document.getElementById("video-title").innerHTML = request.title;
             document.getElementById("video-length").innerHTML = request.length;
-            youtubePlayer.cueVideoById(request.youtube, 5, "medium");
+            youtubePlayer.loadVideoById(request.youtube, 5, "medium");
             youtubePlayer.playVideo();
         } else {
             youtubePlayer.stopVideo();
@@ -88,6 +99,13 @@ function performUpdate() {
 }
 performUpdate();
 
+function updateSeekBar() {
+    if (youtubePlayer == undefined) {
+        return;
+    }
+    console.log(youtubePlayer.getCurrentTime());
+    console.log(youtubePlayer.getDuration());
+}
 
 function updateQueue() {
     //console.log(queue);
@@ -140,15 +158,17 @@ function handleHistoryItem(thisMessage) {
     if (thisMessage.message.indexOf("search: ") !== -1) {
         searchViaApi(thisMessage.message.replace("search: ", ""), messageOwner, function(request) {
             addToQueueIfNotExist(request);
-            hipchat.notify(hipchatRoomName, 
-                {
-                    message: messageOwner + " just requested: " + request.title,
-                    color: 'green',
-                    token: roomToken
-                }, function(err){
-                    if (err == null) console.log('Successfully notified the room.');
-                }
-            );
+            if (showNotifications) {
+                hipchat.notify(hipchatRoomName, 
+                    {
+                        message: messageOwner + " just requested: " + request.title + "<br /><img src='" + request.thumb + "' width='150px' height='100px' />",
+                        color: 'green',
+                        token: roomToken
+                    }, function(err){
+                        if (err == null) console.log('Successfully notified the room.');
+                    }
+                );
+            }
         });
         return;
     }
