@@ -200,22 +200,24 @@ function addToQueueIfNotExist(request) {
 }
 
 function openInYoutube(request){
-  var url = 'https://www.youtube.com/watch?v='+request.youtube;
+  //var url = 'https://www.youtube.com/watch?v='+request.youtube;
+  var url = 'https://www.youtube.com/v/'+request.youtube;
   var e = window.open(url, request.title, "resizable,scrollbars,status");
   var duration = request.length.split(":");
+  var time;
   if(duration.length == 3){
     var hours = duration[0]*3600000;
     var min = duration[1]*60000;
     var sec = duration[2]*1000;
-    var time = hours+min+sec;
+    time = hours+min+sec;
   }else if(duration.length == 2){
     var min = duration[0]*60000;
     var sec = duration[1]*1000;
-    var time = min+sec;
+    time = min+sec;
   }else{
-    var time = duration[0]*1000;
+    time = duration[0]*1000;
   }
-  var time = time + 30000; //covers adverts duration
+  //time = time + 30000; //covers adverts duration
 
   setTimeout(function(){
     e.close();
