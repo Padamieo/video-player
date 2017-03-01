@@ -19,7 +19,6 @@ var youtubePlayer;
 var currentlyPlaying;
 var votesToSkip = 0;
 
-
 //Enable Dev Tools with Control+Shift+I
 document.addEventListener("keydown", function (e) {
     if (e.which === 123) {
@@ -75,15 +74,23 @@ function playVideo(forceSkip) {
         lastPlayStarted = new Date();
         votesToSkip = 0;
         if (queue.length > 0) {
+
             var request = queue.shift();
             console.log("Playing next item in queue: " + request.name + " - " + request.title);
             currentlyPlaying = request;
 
-            document.getElementsByClassName("user")[0].innerHTML = "<p>" + request.name + "</p>";
-            document.getElementById("video-title").innerHTML = request.title;
-            document.getElementById("video-length").innerHTML = request.length;
-            youtubePlayer.loadVideoById(request.youtube, 5, "medium");
-            youtubePlayer.playVideo();
+            if(request.data.contentDetails.licensedContent){
+
+              openInYoutube(request);
+
+            }else{
+              document.getElementsByClassName("user")[0].innerHTML = "<p>" + request.name + "</p>";
+              document.getElementById("video-title").innerHTML = request.title;
+              document.getElementById("video-length").innerHTML = request.length;
+              youtubePlayer.loadVideoById(request.youtube, 5, "medium");
+              youtubePlayer.playVideo();
+            }
+
         } else {
             youtubePlayer.stopVideo();
         }
@@ -118,11 +125,11 @@ function updateQueue() {
 
 function buildHtml(message) {
     return $("<div>").append(
-        $("<img>").attr({
-            "src": message.thumb,
-            "height": "120px",
-            "widget": "200px"
-        })
+      $("<img>").attr({
+        "src": message.thumb,
+        "height": "120px",
+        "widget": "200px"
+      })
     ).append($("<p>").addClass("requestor").text(message.name)
     ).append($("<p>").addClass("requested-title").text(message.title)
     );
@@ -159,7 +166,7 @@ function handleHistoryItem(thisMessage) {
         searchViaApi(thisMessage.message.replace("search: ", ""), messageOwner, function(request) {
             addToQueueIfNotExist(request);
             if (showNotifications) {
-                hipchat.notify(hipchatRoomName, 
+                hipchat.notify(hipchatRoomName,
                     {
                         message: messageOwner + " just requested: " + request.title + "<br /><img src='" + request.thumb + "' width='150px' height='100px' />",
                         color: 'green',
@@ -177,6 +184,7 @@ function handleHistoryItem(thisMessage) {
     }
     var youtubeId = parse_youtube_url(thisMessage.message);
     getVideoInformation(youtubeId, messageOwner, function(request) {
+        console.log(request.data.contentDetails.licensedContent);
         addToQueueIfNotExist(request);
     });
 }
@@ -189,6 +197,29 @@ function addToQueueIfNotExist(request) {
         console.log("New video: " + request.name + " - " + request.title);
         queue.push(request);
     }
+}
+
+function openInYoutube(request){
+  var url = 'https://www.youtube.com/watch?v='+request.youtube;
+  var e = window.open(url, request.title, "resizable,scrollbars,status");
+  var duration = request.length.split(":");
+  if(duration.length == 3){
+    var hours = duration[0]*3600000;
+    var min = duration[1]*60000;
+    var sec = duration[2]*1000;
+    var time = hours+min+sec;
+  }else if(duration.length == 2){
+    var min = duration[0]*60000;
+    var sec = duration[1]*1000;
+    var time = min+sec;
+  }else{
+    var time = duration[0]*1000;
+  }
+  var time = time + 30000; //covers adverts duration
+
+  setTimeout(function(){
+    e.close();
+  }, time);
 }
 
 function is_youtube(message) {

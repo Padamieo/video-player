@@ -6,12 +6,10 @@ html{
 h1{
   color: #fff;
   font-weight: bold;
-  -webkit-text-stroke: 1px #000;
 }
 
 div.user p {
-    color: #FF4444;
-  -webkit-text-stroke: 1px #330000;
+  color: #FF4444;
   font-weight: bolder;
 }
 

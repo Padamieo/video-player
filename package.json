@@ -4,11 +4,12 @@
   "description": "A minimal Electron application",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "nodemon -x electron ."
   },
   "devDependencies": {
     "electron": "*",
-    "electron-packager": "^8.2.0"
+    "electron-packager": "^8.2.0",
+    "nodemon": "*"
   },
   "dependencies": {
     "electron-reload": "^1.0.3",
