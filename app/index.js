@@ -79,7 +79,7 @@ function playVideo(forceSkip) {
             console.log("Playing next item in queue: " + request.name + " - " + request.title);
             currentlyPlaying = request;
 
-            if(request.data.contentDetails.licensedContent){
+            if(identifyVevo(request)){
 
               openInYoutube(request);
 
@@ -199,9 +199,28 @@ function addToQueueIfNotExist(request) {
     }
 }
 
+function identifyVevo(request){
+  console.log(request);
+  vevo = false;
+  console.log(request.channelTitle);
+  if(request.channelTitle){
+    var channelName = request.channelTitle;
+    channelName = channelName.toLowerCase();
+    var n = channelName.search("vevo");
+    console.log(n);
+    if(n >= 0){
+      vevo = true;
+    }
+  }
+
+  console.log("vevo"+vevo);
+  return vevo;
+}
+
 function openInYoutube(request){
-  //var url = 'https://www.youtube.com/watch?v='+request.youtube;
-  var url = 'https://www.youtube.com/v/'+request.youtube;
+  console.log(request);
+  var url = 'https://www.youtube.com/watch?v='+request.youtube;
+  //var url = 'https://www.youtube.com/v/'+request.youtube; // causes save dialog
   var e = window.open(url, request.title, "resizable,scrollbars,status");
   var duration = request.length.split(":");
   var time;
@@ -217,7 +236,7 @@ function openInYoutube(request){
   }else{
     time = duration[0]*1000;
   }
-  //time = time + 30000; //covers adverts duration
+  time = time + 30000; //covers adverts duration
 
   setTimeout(function(){
     e.close();

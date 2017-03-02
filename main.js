@@ -24,7 +24,7 @@ function createWindow () {
     minWidth: 750,
     minHeight: 510,
     webPreferences:{
-      devTools: false
+      devTools: true
     }
   });
 
